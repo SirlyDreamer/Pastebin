@@ -33,7 +33,7 @@ bool Bellman_Ford(int cur, ll n)
 					ok = true;
 				}
 	}
-	return lim > 0;
+	return lim >= 0;
 }
 
 int main()
