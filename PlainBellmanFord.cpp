@@ -8,12 +8,12 @@ constexpr int maxn = 1e6 + 5;
 
 struct edge
 {
-	ll v, w;
+	int v;
+	ll w;
 } tmp;
 
 vector<edge> mp[maxn];
 ll dis[maxn];
-ll vis[maxn];
 
 bool Bellman_Ford(int cur, ll n)
 {
@@ -26,27 +26,24 @@ bool Bellman_Ford(int cur, ll n)
 	{
 		ok = false;
 		for (int u(1); u <= n; ++u)
-		{
 			for (auto& [v,w] : mp[u])
-			{
 				if (dis[v] > dis[u] + w)
 				{
 					dis[v] = dis[u] + w;
 					ok = true;
 				}
-			}
-		}
 	}
-	return ok;
+	return lim > 0;
 }
 
 int main()
 {
-	ll m, n, s, t;
+	int m, n, s, t;
 	cin >> n >> m >> s >> t;
 	for (int i(0); i < m; ++i)
 	{
-		ll u, v, w;
+		int u, v;
+		ll w;
 		cin >> u >> v >> w;
 		tmp.w = w;
 		tmp.v = v;
