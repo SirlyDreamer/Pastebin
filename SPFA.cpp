@@ -16,29 +16,34 @@ struct edge {
 vector<edge> mp[maxn];
 int dis[maxn] = { 0 };
 
-void spfa(int cur) {
-    queue<int> T;
-    bool vis[maxn] = { false };
-    memset(dis, 0x3f, sizeof dis);
-
-    dis[cur] = 0;
-    T.push(cur);
-    vis[cur] = true;
+bool spfa(int u,int n) {
+    queue<int> T;						//存储接下来需要更新dis的点
+    bool vis[maxn] = { false };			//标记是否在队列中
+    int cnt[maxn] = {0};				//统计访问点的次数，如果超过n则说明有负环
+    memset(dis, 0x3f, sizeof dis);		//初始化dis数组为∞
+	dis[u] = 0;
+    
+    T.push(u);						//将源点入队并标记
+    vis[u] = true;
     
     while (!T.empty()) {
-        cur = T.front();
+        u = T.front();				//取出队列前端的点并出队
         T.pop();
-        vis[cur] = false;
-        for (auto& [v, w] : mp[cur]) {
-            if (dis[cur] + w < dis[v]) {
-                dis[v] = dis[cur] + w;
-                if (!vis[v]) {
+        vis[u] = false;				//点u不在队列中了，标记为false
+        for (auto& [v, w] : mp[u]) {
+            if (dis[u] + w < dis[v]) {		//松弛点u的出边
+                dis[v] = dis[u] + w;
+                if (!vis[v]) {				//如果松弛成功则将边的终点入队
                     T.push(v);
                     vis[v] = true;
+                    cnt[v]++;				//统计入队次数（即松弛轮数），如果大于n则说明有负环
+                    if(cnt[v] > n)
+                        return false;
                 }
             }
         }
     }
+    return true;
 }
 
 int main() {
@@ -53,7 +58,7 @@ int main() {
         tmp.v = u;
         mp[v].push_back(tmp);
     }
-    spfa(s);
+    spfa(s,n);
     cout << dis[t];
     return 0;
 }
