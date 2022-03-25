@@ -2,27 +2,25 @@
 #include <unordered_map>
 using namespace std;
 
-namespace std
-{
-	template <>
-	struct hash<string>
-	{
-		size_t operator()(const string& str) const
-		{
-			long long o;
-			for (auto& c : str)
-			{
-				o += c;
-				o += 0x9e3779b97f4a7c15;
-				o = (o ^ (o >> 30)) * 0xbf58476d1ce4e5b9;
-				o = (o ^ (o >> 27)) * 0x94d049bb133111eb;
-			}
-			return o ^ (o >> 31);
-		}
-	};
-}
 
-unordered_map<string, int> mp;
+struct custom_hash
+{
+	size_t operator()(const string& str) const
+	{
+		long long o(0);
+		for (auto& c : str)
+		{
+			o += c;
+			o += 0x9e3779b97f4a7c15;
+			o = (o ^ (o >> 30)) * 0xbf58476d1ce4e5b9;
+			o = (o ^ (o >> 27)) * 0x94d049bb133111eb;
+		}
+		return o ^ (o >> 31);
+	}
+};
+
+
+unordered_map<string, int, custom_hash> mp;
 
 void tolow(string& str)
 {
