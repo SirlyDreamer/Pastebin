@@ -28,7 +28,7 @@ void dij(int u) {
     priority_queue<edge> T;
     bool vis[maxn] = { false };
 
-    memset(dis, 0x3f, sizeof dis);
+    fill(dis,dis+maxn,inf);
     dis[u] = 0;
     T.emplace(u, 0);
     while (!T.empty()) {
