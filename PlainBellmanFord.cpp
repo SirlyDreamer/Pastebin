@@ -24,7 +24,7 @@ vector<i64> dis(maxn);
 
 bool Bellman_Ford(int cur, int n) {
     //初始化dis数组
-    dis.resize(n + 5, inf);
+    fill(dis.begin(),dis.end(),inf);
     dis[cur] = 0;
     bool ok(true);          //标记当前轮是否成功进行一次松弛
 
