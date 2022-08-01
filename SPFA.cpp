@@ -1,64 +1,68 @@
-#include <iostream>
-#include <vector>
-#include <cstring>
-#include <queue>
-using namespace std;
-using ll = long long;
+#include <bits/stdc++.h>
 
-constexpr int maxn = 2505;
-constexpr int maxm = 6205;
+using namespace std;
+
+using i64 = long long;
+
+constexpr int maxn = 1e6 + 5;
+constexpr i64 inf = 0x3f3f3f3f3f3f3f3fL;
 
 struct edge {
-    int v;
-    ll w;
-} tmp;
+    i64 v, w;
+
+    edge() = default;
+
+    edge(int vv, int ww) : v(vv), w(ww) {}
+
+    bool operator<(const edge &e) const {
+        return w > e.w;
+    }
+};
 
 vector<edge> mp[maxn];
-int dis[maxn] = { 0 };
+vector<i64> dis(maxn);
 
-bool spfa(int u,int n) {
-    queue<int> T;						//存储接下来需要更新dis的点
-    bool vis[maxn] = { false };			//标记是否在队列中
-    int cnt[maxn] = {0};				//统计访问点的次数，如果超过n则说明有负环
-    memset(dis, 0x3f, sizeof dis);		//初始化dis数组为∞
-	dis[u] = 0;
-    
-    T.push(u);						//将源点入队并标记
+bool spfa(int u, int n) {
+    queue<int> T;					//存储接下来需要更新dis的点
+    bool vis[maxn] = {false};                           //标记是否在队列中
+    int cnt[maxn] = {0};                                //统计访问点的次数，如果超过n则说明有负环
+    fill(dis.begin(), dis.end(), inf);			//初始化dis数组为∞
+    dis[u] = 0;
+
+    T.push(u);          //将源点入队并标记
     vis[u] = true;
-    
+
     while (!T.empty()) {
-        u = T.front();				//取出队列前端的点并出队
+        u = T.front();                              //取出队列前端的点并出队
         T.pop();
-        vis[u] = false;				//点u不在队列中了，标记为false
-        for (auto& [v, w] : mp[u]) {
-            if (dis[u] + w < dis[v]) {		//松弛点u的出边
+        vis[u] = false;                             //点u不在队列中了，标记为false
+        for (auto &[v, w]: mp[u]) {
+            if (dis[u] + w < dis[v]) {              //松弛点u的出边
                 dis[v] = dis[u] + w;
-                if (!vis[v]) {				//如果松弛成功则将边的终点入队
+                if (!vis[v]) {                      //如果松弛成功则将边的终点入队
                     T.push(v);
                     vis[v] = true;
-                    cnt[v]++;				//统计入队次数（即松弛轮数），如果大于n则说明有负环
-                    if(cnt[v] > n)
-                        return false;
+                    cnt[v]++;                       //统计入队次数（即松弛轮数），如果大于n则说明有负环
+                    if (cnt[v] > n)
+                        return true;
                 }
             }
         }
     }
-    return true;
+    return false;
 }
 
 int main() {
-    ll m, n, s, t;
+    int m, n, s, t;
     cin >> n >> m >> s >> t;
     for (int i(0); i < m; ++i) {
-        ll u, v, w;
+        int u, v;
+        i64 w;
         cin >> u >> v >> w;
-        tmp.w = w;
-        tmp.v = v;
-        mp[u].push_back(tmp);
-        tmp.v = u;
-        mp[v].push_back(tmp);
+        mp[u].emplace_back(v, w);
+        mp[v].emplace_back(u, w);
     }
-    spfa(s,n);
-    cout << dis[t];
+    spfa(s, n);
+    cout << dis[t] << "\n";
     return 0;
 }
