@@ -1,121 +1,111 @@
-#include <iostream>
-#include <cstring>
-#include <vector>
-#include <queue>
+#include <bits/stdc++.h>
+
 using namespace std;
+using i64 = long long;
+constexpr int maxn = 3e3 + 5;
+constexpr i64 inf = 0x3f3f3f3f3f3f3f3fL;
 
-using ll = long long;
+struct edge {
+    i64 v, w;
 
-constexpr int maxn = 505;
-constexpr ll inf = 0x3f3f3f3f3f3f3f3fL;
+    edge() = default;
 
-struct edge
-{
-    int v;
-    ll w;
-    edge(int vv, ll ww) :v(vv), w(ww) {}
-    edge() :v(0), w(0) {}
-    bool operator<(const edge& rhs) const
-    {
-        return w > rhs.w;
+    edge(int vv, int ww) : v(vv), w(ww) {}
+
+    bool operator<(const edge &e) const {
+        return w > e.w;
     }
-} tmp;
+};
 
 vector<edge> mp[maxn];
-ll ddis[maxn][maxn] = { 0 };
+//i64 dis[maxn];
+vector<vector<i64>> dis(maxn, vector<i64>(maxn, 0));
+vector<i64> h(maxn);
 
-bool spfa(ll(&dis)[maxn], int u, int n) {
-    queue<int> T;					
-    bool vis[maxn] = { false };			
-    int cnt[maxn] = { 0 };			
-    memset(dis, 0x3f, sizeof dis);		
-    dis[u] = 0;
-
-    T.push(u);				
-    vis[u] = true;
-
-    while (!T.empty()) {
-        u = T.front();			
-        T.pop();
-        vis[u] = false;			
-        for (auto& [v, w] : mp[u]) {
-            if (dis[u] + w < dis[v]) {	
-                dis[v] = dis[u] + w;
-                if (!vis[v]) {				
-                    T.push(v);
-                    vis[v] = true;
-                    cnt[v]++;			
-                    if (cnt[v] > n)
-                        return false;
+bool spfa(int s, int n) {
+    queue<int> q;
+    fill(h.begin(), h.end(), inf);
+    bitset<maxn> vis;
+    vector<int> cnt(maxn);
+    h[s] = 0;
+    q.emplace(s);
+    vis[s] = 1;
+    while (!q.empty()) {
+        auto u = q.front();
+        q.pop();
+        vis[u] = 0;
+        for (auto [v, w]: mp[u]) {
+            if (h[v] > h[u] + w) {
+                h[v] = h[u] + w;
+                if (!vis[v]) {
+                    q.emplace(v);
+                    vis[v] = 1;
+                    cnt[v]++;
+                    if (cnt[v] == n)
+                        return true;
                 }
             }
         }
     }
-    return true;
+    return false;
 }
 
-void dij(ll(&dis)[maxn], int u)
-{
-	memset(dis, 0x3f, sizeof dis);
-	bool vis[maxn] = { false };
-	dis[u] = 0;
-	priority_queue<edge> T;
-	T.emplace(u,0LL);
-	while (!T.empty())
-	{
-		u = T.top().v;
-		T.pop();
-		if (vis[u])
-			continue;
-		vis[u] = true;
-		for (auto& [v, w] : mp[u])
-		{
-			if (dis[v] > dis[u] + w)
-			{
-				dis[v] = dis[u] + w;
-                T.emplace(v, dis[v]);
-			}
-		}
-	}
+void dij(int s, int u) {
+    priority_queue<edge> T;
+    bool vis[maxn] = {false};
+
+    fill(dis[s].begin(), dis[s].end(), inf);
+    dis[s][u] = 0;
+    T.emplace(u, 0);
+    while (!T.empty()) {
+        u = T.top().v;
+        T.pop();
+        if (vis[u])
+            continue;
+        vis[u] = true;
+        for (auto &[v, w]: mp[u]) {
+            if (dis[s][u] + w < dis[s][v]) {
+                dis[s][v] = dis[s][u] + w;
+                T.emplace(v, dis[s][v]);
+            }
+        }
+    }
 }
 
-bool johnson(int& n)
-{
-    for (int v(1); v <= n; ++v)
-        mp[0].emplace_back(v, 0LL);
-    if (!spfa(ddis[0], 0, n))
-        return false;
-    for (int u(1); u <= n; ++u)
-        for (auto& [v, w] : mp[u])
-            w = w + ddis[0][u] - ddis[0][v];
-    for (int u(1); u <= n; ++u)
-        dij(ddis[u], u);
-    return true;
-}
 
-int main()
-{
-	int n, m, t;
-	cin >> n >> m >> t;
-
-	for (int i(0); i < m; ++i)
-	{
-		int u, v;
-		ll w;
-		cin >> u >> v >> w;
-		mp[u].emplace_back(v, w);
-	}
-	
-    johnson(n);
-    
-	for (int i(0); i < t; ++i)
-	{
-		int u, v;
-		cin >> u >> v;
-		if (ddis[u][v] == inf)
-			cout << "impossible\n";
-		else
-			cout << ddis[u][v] << "\n";
-	}
-	return 0;
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i(0); i < m; ++i) {
+        int u, v;
+        i64 w;
+        cin >> u >> v >> w;
+        mp[u].emplace_back(v, w);
+    }
+    for (int v(1); v <= n; ++v) {
+        mp[0].emplace_back(v, 0);
+    }
+    if (spfa(0, n))
+        cout << "-1\n";
+    else {
+        for (int u(1); u <= n; ++u)
+            for (auto &[v, w]: mp[u])
+                w = w + h[u] - h[v];
+        for (int u(1); u <= n; ++u)
+            dij(u, u);
+        for (int u(1); u <= n; ++u) {
+            i64 ans(0);
+            for (int v(1); v <= n; ++v) {
+                if (dis[u][v] == inf)
+                    ans += v * 1e9;
+                else if (u == v)
+                    continue;
+                else {
+                    ans += v * (dis[u][v] - h[u] + h[v]);
+                }
+            }
+            cout << ans << "\n";
+        }
+    }
+    return 0;
 }
