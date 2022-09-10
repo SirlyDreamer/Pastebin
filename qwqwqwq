@@ -1,0 +1,214 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using i64 = long long;
+
+constexpr int maxn = 1e6 + 5;
+
+constexpr i64 _mod = 1e9 + 7;
+
+
+i64 norm(i64 x) {
+    if (x < 0) {
+        x += _mod;
+    }
+    if (x >= _mod) {
+        x -= _mod;
+    }
+    return x;
+}
+
+struct mint {
+    int x;
+
+    mint(int x = 0) : x(norm(x)) {}
+
+    mint(i64 x) : x(norm((int) (x % _mod))) {}
+
+
+    int val() const {
+        return x;
+    }
+
+    mint operator-() const {
+        return mint(norm(_mod - x));
+    }
+
+
+    mint &operator*=(const mint &rhs) {
+        x = i64(x) * rhs.x % _mod;
+        return *this;
+    }
+
+    mint &operator+=(const mint &rhs) {
+        x = norm(x + rhs.x);
+        return *this;
+    }
+
+    mint &operator-=(const mint &rhs) {
+        x = norm(x - rhs.x);
+        return *this;
+    }
+
+    friend ostream &operator<<(ostream &stream, const mint &v) {
+        stream << v.x;
+        return stream;
+    }
+
+    friend mint operator*(const mint &lhs, const mint &rhs) {
+        mint res = lhs;
+        res *= rhs;
+        return res;
+    }
+
+    friend mint operator+(const mint &lhs, const mint &rhs) {
+        mint res = lhs;
+        res += rhs;
+        return res;
+    }
+
+    friend mint operator-(const mint &lhs, const mint &rhs) {
+        mint res = lhs;
+        res -= rhs;
+        return res;
+    }
+};
+
+struct segment {
+    mint ways[2][2];
+
+    segment(int x = -1) {
+        ways[0][0] = ways[0][1] = ways[1][0] = ways[1][1] = 0;
+        if (x == -1) return;
+        ways[x][x] = 1;
+    }
+
+    mint ans() const {
+        return ways[0][0] + ways[0][1] + ways[1][0] + ways[1][1];
+    }
+
+    void ins(const segment &other) {
+        mint w[2][2] = {0};
+
+        for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+                w[i][j] = ways[i][j] + other.ways[i][j];
+
+        for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+                for (int k = 0; k < 2; ++k)
+                    w[i][k] += ways[i][j] * other.ways[!j][k];
+
+        for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+                ways[i][j] = w[i][j];
+    }
+
+    segment operator+(const segment &other) {
+        segment res = *this;
+        res.ins(other);
+        return res;
+    }
+};
+
+struct node {
+    int l, r;
+    segment data;
+
+    node operator+(const node &rhs) {
+        node tmp;
+        tmp.data = this->data + rhs.data;
+        return tmp;
+    }
+
+    node operator+=(const node &rhs) {
+        *this = *this + rhs;
+        return *this;
+    }
+} fst[4 * maxn];
+
+inline void push_up(vector<node> &st, const int &pos) {
+    st[pos].data = st[pos << 1].data + st[pos << 1 | 1].data;
+}
+
+void build(vector<node> &st, const vector<segment> &x, const int &l, const int &r, const int &pos = 1) {
+    st[pos].l = l;
+    st[pos].r = r;
+    if (l == r) {
+        st[pos].data = x[l];
+        return;
+    }
+    const int &mid = (l + r) >> 1;
+    build(st, x, l, mid, pos << 1);
+    build(st, x, mid + 1, r, pos << 1 | 1);
+    push_up(st, pos);
+}
+
+void update(vector<node> &st, const int &l, const int &r, const segment &val, const int &pos = 1) {
+    if (st[pos].l > r || st[pos].r < l)
+        return;
+    if (st[pos].l >= l && st[pos].r <= r) {
+        st[pos].data = val;
+        return;
+    }
+    update(st, l, r, val, pos << 1);
+    update(st, l, r, val, pos << 1 | 1);
+    push_up(st, pos);
+}
+
+segment query(vector<node> &st, const int &l, const int &r, const int &pos = 1) {
+    if (st[pos].l > r || st[pos].r < l)
+        return segment();
+    if (st[pos].l >= l && st[pos].r <= r)
+        return st[pos].data;
+    return query(st, l, r, pos << 1) + query(st, l, r, pos << 1 | 1);
+}
+
+struct qwq {
+    int start, end, k, index;
+
+    bool operator<(const qwq &other) const {
+        return k < other.k;
+    }
+};
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(n);
+    for (auto &e: a)
+        cin >> e;
+    vector<qwq> qq(q);
+    int id(0);
+    for (auto &[l, r, k, i]: qq) {
+        cin >> k >> l >> r;
+        --l;
+        --r;
+        i = id++;
+    }
+
+    vector<int> inds(n);
+    iota(inds.begin(), inds.end(), 0);
+
+    sort(inds.begin(), inds.end(), [&](int i, int j) {
+        return a[i] < a[j];
+    });
+
+    sort(qq.begin(), qq.end());
+    int i = 0;
+    vector<node> tree(n * 4);
+
+    build(tree, vector<segment>(n, 1), 0, n - 1);
+    vector<mint> answers(q);
+    cout << query(tree, 0, n - 1).ans() << '\n';
+
+    for (auto &qry: qq) {
+        while (i < n && a[inds[i]] < qry.k) {
+            update(tree, inds[i], inds[i], segment(0));
+            i++;
+        }
+        answers[qry.index] = query(tree, qry.start, qry.end).ans();
+    }
+    for (auto ans: answers)
+        cout << ans.val() << '\n';
+}
